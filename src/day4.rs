@@ -1,13 +1,253 @@
+use std::{collections::HashMap, str::FromStr};
+
+use regex::Regex;
+
 #[derive(Debug)]
 struct Passport {
-    birth_year: usize,
-    issue_year: usize,
-    expiration_year: usize,
-    height: String,
-    hair_color: String,
-    eye_color: String,
-    passport_id: String,
+    birth_year: BirthYear,
+    issue_year: IssueYear,
+    expiration_year: ExpirationYear,
+    height: Height,
+    hair_color: HairColor,
+    eye_color: EyeColor,
+    passport_id: PassportId,
     country_id: Option<String>,
+}
+
+impl FromStr for Passport {
+    type Err = PassportValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let kvs: HashMap<&str, &str> = s
+            .split(" ")
+            .filter_map(|x| {
+                if let [k, v, ..] = x.split(":").collect::<Vec<&str>>()[..] {
+                    Some((k, v))
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Ok(Passport {
+            birth_year: kvs
+                .get("byr")
+                .ok_or(PassportValidationError::FieldMissing("byr"))?
+                .parse()?,
+            issue_year: kvs
+                .get("iyr")
+                .ok_or(PassportValidationError::FieldMissing("iyr"))?
+                .parse()?,
+            expiration_year: kvs
+                .get("eyr")
+                .ok_or(PassportValidationError::FieldMissing("eyr"))?
+                .parse()?,
+            height: kvs
+                .get("hgt")
+                .ok_or(PassportValidationError::FieldMissing("hgt"))?
+                .parse()?,
+            hair_color: kvs
+                .get("hcl")
+                .ok_or(PassportValidationError::FieldMissing("hcl"))?
+                .parse()?,
+            eye_color: kvs
+                .get("ecl")
+                .ok_or(PassportValidationError::FieldMissing("ecl"))?
+                .parse()?,
+            passport_id: kvs
+                .get("pid")
+                .ok_or(PassportValidationError::FieldMissing("pid"))?
+                .parse()?,
+            country_id: kvs.get("cid").map(|x| x.to_string()),
+        })
+    }
+}
+
+#[derive(Debug)]
+struct BirthYear {
+    value: u16,
+}
+
+impl FromStr for BirthYear {
+    type Err = PassportValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parse_result = s.parse::<u16>();
+
+        if let Ok(year) = parse_result {
+            if (year >= 1920) & (year <= 2002) {
+                return Ok(BirthYear { value: year });
+            }
+        }
+        Err(PassportValidationError::FieldInvalid("BirthYear"))
+    }
+}
+
+#[derive(Debug)]
+struct IssueYear {
+    value: u16,
+}
+
+impl FromStr for IssueYear {
+    type Err = PassportValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parse_result = s.parse::<u16>();
+
+        if let Ok(year) = parse_result {
+            if (year >= 2010) & (year <= 2020) {
+                return Ok(IssueYear { value: year });
+            }
+        }
+        Err(PassportValidationError::FieldInvalid("IssueYear"))
+    }
+}
+
+#[derive(Debug)]
+struct ExpirationYear {
+    value: u16,
+}
+
+impl FromStr for ExpirationYear {
+    type Err = PassportValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parse_result = s.parse::<u16>();
+
+        if let Ok(year) = parse_result {
+            if (year >= 2020) & (year <= 2030) {
+                return Ok(ExpirationYear { value: year });
+            }
+        }
+        Err(PassportValidationError::FieldInvalid("ExpirationYear"))
+    }
+}
+
+#[derive(Debug)]
+struct Height {
+    amount: u16,
+    unit: LengthUnit,
+}
+
+#[derive(Debug)]
+enum LengthUnit {
+    Inches,
+    Centimetres,
+}
+
+#[derive(Debug)]
+struct LengthUnitParseError;
+
+impl FromStr for LengthUnit {
+    type Err = LengthUnitParseError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "in" => Ok(LengthUnit::Inches),
+            "cm" => Ok(LengthUnit::Centimetres),
+            _ => Err(LengthUnitParseError),
+        }
+    }
+}
+
+impl FromStr for Height {
+    type Err = PassportValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let parse_unit = s[s.len() - 2..].parse::<LengthUnit>();
+        let parse_result = s[..s.len() - 2].parse::<u16>();
+
+        if let Ok(amount) = parse_result {
+            if let Ok(unit) = parse_unit {
+                match unit {
+                    LengthUnit::Centimetres => {
+                        if (amount >= 150) & (amount <= 193) {
+                            return Ok(Height {
+                                unit: unit,
+                                amount: amount,
+                            });
+                        }
+                    }
+                    LengthUnit::Inches => {
+                        if (amount >= 59) & (amount <= 76) {
+                            return Ok(Height {
+                                unit: unit,
+                                amount: amount,
+                            });
+                        }
+                    }
+                }
+            }
+        }
+        Err(PassportValidationError::FieldInvalid("Height"))
+    }
+}
+
+#[derive(Debug)]
+struct HairColor {
+    value: String,
+}
+
+impl FromStr for HairColor {
+    type Err = PassportValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let re = Regex::new(r"^#[a-f0-9]{6}$").unwrap();
+        if re.is_match(s) {
+            Ok(HairColor {
+                value: s.to_string(),
+            })
+        } else {
+            Err(PassportValidationError::FieldInvalid("HairColor"))
+        }
+    }
+}
+
+#[derive(Debug)]
+enum EyeColor {
+    Amber,
+    Blue,
+    Brown,
+    Grey,
+    Green,
+    Hazel,
+    Other,
+}
+
+impl FromStr for EyeColor {
+    type Err = PassportValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        match s {
+            "amb" => Ok(EyeColor::Amber),
+            "blu" => Ok(EyeColor::Blue),
+            "brn" => Ok(EyeColor::Brown),
+            "gry" => Ok(EyeColor::Grey),
+            "grn" => Ok(EyeColor::Green),
+            "hzl" => Ok(EyeColor::Hazel),
+            "oth" => Ok(EyeColor::Other),
+            _ => Err(PassportValidationError::FieldInvalid("EyeColor")),
+        }
+    }
+}
+
+#[derive(Debug)]
+struct PassportId {
+    value: String,
+}
+
+impl FromStr for PassportId {
+    type Err = PassportValidationError;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let re = Regex::new(r"^[0-9]{9}$").unwrap();
+        if re.is_match(s) {
+            Ok(PassportId {
+                value: s.to_string(),
+            })
+        } else {
+            Err(PassportValidationError::FieldInvalid("HairColor"))
+        }
+    }
 }
 
 #[derive(Debug)]
@@ -21,91 +261,36 @@ struct Length {
     amount: usize,
 }
 
-fn group_batch_file_lines(mut input: Vec<Vec<KV>>) -> Vec<Vec<KV>> {
-    let mut grouped_collection = vec![vec![]];
-    for line in input.iter_mut() {
-        if line.is_empty() {
-            grouped_collection.push(vec![])
-        } else {
-            grouped_collection.last_mut().unwrap().append(line)
-        }
-    }
-    grouped_collection
-}
-
-fn get_string_field(
-    kvs: &Vec<KV>,
-    field_name: &'static str,
-) -> Result<String, PassportValidationError> {
-    kvs.iter()
-        .find_map(|KV { key, value }| {
-            if *key == field_name {
-                Some(value.to_string())
-            } else {
-                None
-            }
-        })
-        .ok_or(PassportValidationError::FieldMissing(field_name))
-}
-
-fn get_numeric_field(
-    kvs: &Vec<KV>,
-    field_name: &'static str,
-) -> Result<usize, PassportValidationError> {
-    get_string_field(kvs, field_name)?
-        .parse()
-        .map_err(|_| PassportValidationError::FieldInvalid(field_name))
-}
-
-fn parse_passport(kvs: &Vec<KV>) -> Result<Passport, PassportValidationError> {
-    Ok(Passport {
-        birth_year: get_numeric_field(kvs, "byr")?,
-        issue_year: get_numeric_field(kvs, "iyr")?,
-        expiration_year: get_numeric_field(kvs, "eyr")?,
-        height: get_string_field(kvs, "hgt")?,
-        hair_color: get_string_field(kvs, "hcl")?,
-        eye_color: get_string_field(kvs, "ecl")?,
-        passport_id: get_string_field(kvs, "pid")?,
-        country_id: get_string_field(kvs, "cid").ok(),
-    })
-}
-
-#[derive(Debug)]
-struct KV<'a> {
-    key: &'a str,
-    value: &'a str,
-}
-
-fn to_kvs(line: &str) -> Vec<KV> {
-    if line == "" {
-        vec![]
-    } else {
-        line.split(' ')
-            .map(|x| {
-                let split = x.split(':').collect::<Vec<&str>>();
-                KV {
-                    key: split[0],
-                    value: split[1],
+fn group_batch_file_lines(input: Vec<String>) -> Vec<String> {
+    input
+        .iter()
+        .fold(vec![vec![]], |mut acc, line| {
+            if let Some(mut current_batch) = acc.last_mut() {
+                if line == "" {
+                    acc.push(vec![])
+                } else {
+                    current_batch.push(line.clone())
                 }
-            })
-            .collect()
-    }
+            }
+            acc
+        })
+        .iter()
+        .map(|x| x.join(" "))
+        .collect()
 }
 
 fn parse_batch_files(input: Vec<&str>) -> Vec<Result<Passport, PassportValidationError>> {
-    let grouped = group_batch_file_lines(input.iter().map(|&x| to_kvs(x)).collect());
-    grouped.iter().map(|x| parse_passport(x)).collect()
+    group_batch_file_lines(input.iter().map(|x| x.to_string()).collect())
+        .iter()
+        .map(|x| x.parse())
+        .collect()
 }
 
-fn puzzle1(input: Vec<&str>) -> usize {
+pub fn puzzle1(input: Vec<&str>) -> usize {
     parse_batch_files(input)
         .iter()
         .filter(|x| x.is_ok())
         .count()
-}
-
-fn puzzle2(input: Vec<&str>) -> usize {
-    0
 }
 
 #[cfg(test)]
@@ -119,17 +304,7 @@ mod tests {
 
     #[test]
     fn first_puzzle_real_input() {
-        assert_eq!(puzzle1(REAL_INPUT.to_vec()), 202);
-    }
-
-    #[test]
-    fn second_puzzle_test_input() {
-        assert_eq!(puzzle2(TEST_INPUT.to_vec()), 1);
-    }
-
-    #[test]
-    fn second_puzzle_real_input() {
-        assert_eq!(puzzle2(REAL_INPUT.to_vec()), 673);
+        assert_eq!(puzzle1(REAL_INPUT.to_vec()), 137);
     }
 
     const TEST_INPUT: &'static [&'static str] = &[
