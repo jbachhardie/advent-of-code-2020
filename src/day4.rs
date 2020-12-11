@@ -256,16 +256,11 @@ enum PassportValidationError {
     FieldInvalid(&'static str),
 }
 
-struct Length {
-    unit: String,
-    amount: usize,
-}
-
 fn group_batch_file_lines(input: Vec<String>) -> Vec<String> {
     input
         .iter()
         .fold(vec![vec![]], |mut acc, line| {
-            if let Some(mut current_batch) = acc.last_mut() {
+            if let Some(current_batch) = acc.last_mut() {
                 if line == "" {
                     acc.push(vec![])
                 } else {
