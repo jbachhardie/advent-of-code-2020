@@ -1,8 +1,4 @@
-use std::{
-    collections::{BTreeSet, HashSet},
-    convert::TryFrom,
-    str::FromStr,
-};
+use std::{collections::BTreeSet, convert::TryFrom, str::FromStr};
 #[derive(Debug, PartialEq)]
 enum Command {
     Nop,
@@ -108,14 +104,14 @@ impl Program {
     }
 }
 
-fn puzzle1(input: Vec<String>) -> i32 {
+pub fn puzzle1(input: Vec<String>) -> i32 {
     if let ProgramResult::Loops(result) = Program::from_string(input).unwrap().run() {
         result
     } else {
         panic!("Did not loop")
     }
 }
-fn puzzle2(input: Vec<String>) -> i32 {
+pub fn puzzle2(input: Vec<String>) -> i32 {
     let mut program = Program::from_string(input).unwrap();
     program.heal();
     if let ProgramResult::Terminates(result) = program.run() {

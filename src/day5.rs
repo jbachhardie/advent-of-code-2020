@@ -143,7 +143,7 @@ struct SeatingPosition {
     id: usize,
 }
 
-fn puzzle1(input: Vec<String>) -> usize {
+pub fn puzzle1(input: Vec<String>) -> usize {
     input
         .iter()
         .map(|x| x.parse::<BoardingPass>())
@@ -154,7 +154,7 @@ fn puzzle1(input: Vec<String>) -> usize {
         .max()
         .unwrap()
 }
-fn puzzle2(input: Vec<String>) -> usize {
+pub fn puzzle2(input: Vec<String>) -> usize {
     let mut all_boarding_passes = input
         .iter()
         .map(|x| x.parse::<BoardingPass>())

@@ -19,10 +19,10 @@
 		"scope": "rust",
 		"prefix": "newDay",
 		"body": [
-			"fn puzzle1(input: Vec<String>) -> usize {",
+			"pub fn puzzle1(input: Vec<String>) -> usize {",
 			"  0",
 			"}",
-			"fn puzzle2(input: Vec<String>) -> usize {",
+			"pub fn puzzle2(input: Vec<String>) -> usize {",
 			"  0",
 			"}",
 			"",

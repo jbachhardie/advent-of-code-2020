@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-fn puzzle1(input: Vec<String>) -> usize {
+pub fn puzzle1(input: Vec<String>) -> usize {
     let mut sets = vec![HashSet::new()];
     for line in input {
         if let Some(current_set) = sets.last_mut() {
@@ -16,7 +16,7 @@ fn puzzle1(input: Vec<String>) -> usize {
     sets.iter().map(|x| x.len()).sum()
 }
 
-fn puzzle2(input: Vec<String>) -> usize {
+pub fn puzzle2(input: Vec<String>) -> usize {
     let mut all_answers = vec![HashSet::new()];
     let mut people_in_group = 0;
     let mut current_group_answers = HashMap::new();

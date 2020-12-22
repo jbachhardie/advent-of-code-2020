@@ -113,7 +113,7 @@ impl FromStr for ContainmentDefinition {
     }
 }
 
-fn puzzle1(input: Vec<String>) -> usize {
+pub fn puzzle1(input: Vec<String>) -> usize {
     Rules::from_strings(input)
         .unwrap()
         .get_bags_which_can_contain(&"shiny gold".to_string())
@@ -121,7 +121,7 @@ fn puzzle1(input: Vec<String>) -> usize {
         .count()
 }
 
-fn puzzle2(input: Vec<String>) -> usize {
+pub fn puzzle2(input: Vec<String>) -> usize {
     Rules::from_strings(input)
         .unwrap()
         .get_number_of_bags_contained_in(&"shiny gold".to_string())

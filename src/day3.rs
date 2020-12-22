@@ -25,12 +25,12 @@ fn find_collisions(map: &Vec<Vec<Tile>>, x_slope: usize, y_slope: usize) -> usiz
     trees_encountered
 }
 
-fn puzzle1(input: Vec<&str>) -> usize {
+pub fn puzzle1(input: Vec<&str>) -> usize {
     let map = input.iter().map(|&x| parse_tiles(x)).collect();
     find_collisions(&map, 3, 1)
 }
 
-fn puzzle2(input: Vec<&str>) -> usize {
+pub fn puzzle2(input: Vec<&str>) -> usize {
     let map = input.iter().map(|&x| parse_tiles(x)).collect();
     find_collisions(&map, 1, 1)
         * find_collisions(&map, 3, 1)
