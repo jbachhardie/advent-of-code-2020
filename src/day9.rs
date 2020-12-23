@@ -57,13 +57,17 @@ fn find_contiguous_set<'a>(input: &'a Vec<usize>, target: usize) -> &'a [usize] 
     }
 }
 
+fn to_numbers(input: Vec<String>) -> Vec<usize> {
+    input.iter().map(|x| x.parse().unwrap()).collect()
+}
+
 pub fn puzzle1(input: Vec<String>, prelude_length: usize) -> usize {
-    let input_numbers = input.iter().map(|x| x.parse().unwrap()).collect();
+    let input_numbers = to_numbers(input);
     find_first_invalid(&input_numbers, prelude_length)
 }
 
 pub fn puzzle2(input: Vec<String>, prelude_length: usize) -> usize {
-    let input_numbers = input.iter().map(|x| x.parse().unwrap()).collect();
+    let input_numbers = to_numbers(input);
     let first_invalid = find_first_invalid(&input_numbers, prelude_length);
     let contiguous_set = find_contiguous_set(&input_numbers, first_invalid);
     contiguous_set.iter().max().unwrap() + contiguous_set.iter().min().unwrap()
